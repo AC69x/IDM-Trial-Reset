@@ -1,0 +1,53 @@
+name: Update NoirBird-IDM-Reset to the latest version of the code
+
+on:
+  push:
+    paths:
+      - "NoirBird-IDM-Reset.py"  # Run this workflow on every push to NoirBird-IDM-Reset.py
+  pull_request:
+    paths:
+      - "NoirBird-IDM-Reset.py"  # Run this workflow on every pull request to NoirBird-IDM-Reset.py
+
+jobs:
+  build_and_upload:
+    runs-on: windows-2019  # Use Windows 10 runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Check out the repository code
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11  # Use Python 3.11
+
+      - name: Install PyInstaller
+        run: |
+          pip install pyinstaller
+
+      - name: Compile using PyInstaller
+        run: |
+          pyinstaller -F --uac-admin NoirBird-IDM-Reset.py
+
+      - name: Get Existing Release ID
+        id: get_release
+        run: |
+          echo "::set-output name=release_id::$(curl -s -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/NoirBird/IDM-Trial-Reset/releases/latest | jq -r '.id')"
+        shell: bash
+
+      - name: Get Existing Asset ID
+        id: get_asset
+        run: |
+          echo "::set-output name=asset_id::$(curl -s -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/NoirBird/IDM-Trial-Reset/releases/${{ steps.get_release.outputs.release_id }}/assets | jq -r '.[] | select(.name == "NoirBird-IDM-Reset.exe") | .id')"
+        shell: bash
+
+      - name: Delete Existing Asset
+        if: steps.get_asset.outputs.asset_id != 'null'
+        run: |
+          curl -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/NoirBird/IDM-Trial-Reset/releases/assets/${{ steps.get_asset.outputs.asset_id }}"
+        shell: bash
+
+      - name: Upload to Release
+        run: |
+          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/octet-stream" --data-binary @dist/NoirBird-IDM-Reset.exe "https://uploads.github.com/repos/NoirBird/IDM-Trial-Reset/releases/${{ steps.get_release.outputs.release_id }}/assets?name=NoirBird-IDM-Reset.exe"
+        shell: bash
