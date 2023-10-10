@@ -17,7 +17,7 @@ RK_Delete = [
     r"Software\Classes\CLSID\{07999AC3-058B-40BF-984F-69EB1E554CA7}",
     r"Software\Classes\Wow6432Node\CLSID\{07999AC3-058B-40BF-984F-69EB1E554CA7}"
 ]
-licence_datasheet = {"FName": "-","LName": "-","Email": "-","Serial": "-"}
+licence_datasheet = {"FName": "","LName": "","Email": "","Serial": ""}
 
 def main():
     if os.path.exists(f"{os.path.join(os.environ['APPDATA'])}\\DMCache"):
